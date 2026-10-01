@@ -2,6 +2,10 @@
 
 A Python tool for extracting, repacking, and verifying Yaesu FT-710 firmware update files (`.SFL` format). Supports all four firmware types: MAIN, DISPLAY, IFDSP, and SDR.
 
+
+![](photo.jpg?raw=true)
+
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -11,6 +15,10 @@ A Python tool for extracting, repacking, and verifying Yaesu FT-710 firmware upd
   - [Extract](#extract)
   - [Pack](#pack)
   - [Verify](#verify)
+- [Hacking](#hacking)
+  - [Step-by-Step Guide](#step-by-step-guide)
+  - [MARS / DEV Mod Example](#mars--dev-mod-example)
+  - [Cross-Model Compatibility](#cross-model-compatibility)
 - [Firmware Types](#firmware-types)
 - [Cipher Details](#cipher-details)
 - [Ghidra & IDA Pro Import Guide](#ghidra--ida-pro-import-guide)
@@ -93,6 +101,38 @@ The `pack` command reassembles the output directory into a valid SFL file:
 
 - **Without `--rebuild`**: Uses `raw_encrypted.bin` directly — produces a byte-identical copy of the original. Safe for testing.
 - **With `--rebuild`**: Re-encrypts from the decoded binary/S-records. Use this after modifying the firmware content (e.g., patching strings, changing code). The result may differ slightly in size if line endings or padding change.
+
+## Hacking
+
+If you want to perform custom reverse-engineering, patch different memory layers, or port this method to other Yaesu radios, follow this workflow:
+
+### Step-by-Step Guide
+
+1. **Unpack the firmware:**
+   Extract the raw binary payload and S-records from the official container using the decoder script:
+   ```bash
+   python3 decode_sfl.py FT-710_MAIN_V0112.SFL output_main/
+   ```
+
+2. **Analyze the binaries:**
+   Load the decompiled outputs from the `output_main/` directory into **Ghidra** or your preferred disassembly tool (configured for the **Renesas RX** architecture).
+
+3. **Apply your modifications:**
+   Locate the targeting validation functions and apply your instruction patches directly to the assembly/S-records.
+
+4. **Repack the firmware:**
+   Pack the modified workspace directory back into an official SFL container while automatically recalculating the required master checksums:
+   ```bash
+   python3 decode_sfl.py pack output_main/ FT-710_MAIN_V0112_patched.SFL --rebuild
+   ```
+
+5. **Flash the transceiver:**
+   Load the patched SFL file onto your SD card and trigger the standard MAIN CPU firmware update on the device.
+
+### Examples & Porting
+
+* **Quick MARS / DEV Mode Unlock:** For a step-by-step example of bypassing regional blocks on the FT-710, refer to the [FT-710_MARS_MOD.md](./FT-710_MARS_MOD.md) guide.
+* **Cross-Model Compatibility:** Because Yaesu utilizes a unified software architecture across their current generation of rigs, these exact tools and logic patterns are highly likely to be applicable for unlocking the **Yaesu FTDX10** and **FTDX101D/MP** platforms.
 
 ### Verify
 
@@ -265,6 +305,8 @@ The SDR firmware is a **Xilinx FPGA bitstream**, not ARM code. Do not load it in
 ## Disclaimer
 
 This tool is for **educational and research purposes only**. It is not affiliated with or endorsed by Yaesu Musen Co., Ltd. Modifying and re-flashing firmware may void your warranty, brick your device, or violate local radio regulations. Use at your own risk.
+
+DSP, SDR and DISPLAY repacking were never actually tested with real hardware.
 
 ## License
 
