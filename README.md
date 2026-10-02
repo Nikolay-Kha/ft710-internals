@@ -101,6 +101,19 @@ The `pack` command reassembles the output directory into a valid SFL file:
 - **Without `--rebuild`**: Uses `raw_encrypted.bin` directly — produces a byte-identical copy of the original. Safe for testing.
 - **With `--rebuild`**: Re-encrypts from the decoded binary/S-records. Use this after modifying the firmware content (e.g., patching strings, changing code). The result may differ slightly in size if line endings or padding change.
 
+### Verify
+
+```bash
+python3 decode_sfl.py verify FT-710_MAIN_V0112.SFL
+```
+
+Performs a full round-trip test:
+1. Extracts the firmware to a temporary directory
+2. Packs it back (both non-rebuild and rebuild modes)
+3. Compares the result byte-by-byte with the original
+
+This is useful for confirming that the cipher implementation is correct and that no data is lost during the extract/pack cycle.
+
 ## Hacking
 
 If you want to perform custom reverse-engineering, patch different memory layers, or port this method to other Yaesu radios, follow this workflow:
@@ -132,19 +145,6 @@ If you want to perform custom reverse-engineering, patch different memory layers
 
 * **Quick MARS / DEV Mode Unlock:** For a step-by-step example of bypassing regional blocks on the FT-710, refer to the [FT-710_MARS_MOD.md](./FT-710_MARS_MOD.md) guide.
 * **Cross-Model Compatibility:** Because Yaesu utilizes a unified software architecture across their current generation of rigs, these exact tools and logic patterns are highly likely to be applicable for unlocking the **Yaesu FTDX10** and **FTDX101D/MP** platforms.
-
-### Verify
-
-```bash
-python3 decode_sfl.py verify FT-710_MAIN_V0112.SFL
-```
-
-Performs a full round-trip test:
-1. Extracts the firmware to a temporary directory
-2. Packs it back (both non-rebuild and rebuild modes)
-3. Compares the result byte-by-byte with the original
-
-This is useful for confirming that the cipher implementation is correct and that no data is lost during the extract/pack cycle.
 
 ## Firmware Types
 
